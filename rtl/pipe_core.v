@@ -10,7 +10,18 @@ module pipe_core (input clk, input rst);
   reg [31:0] imem [0:255];
   reg [31:0] dmem [0:255];
   reg [31:0] regs [0:31];
+  
+  integer i;
+`ifndef SYNTHESIS   // simulation-only: zero memories and load program
+  initial begin : init
+    reg [1023:0] fname;
+    for (i = 0; i < 256; i = i + 1) begin imem[i] = 0; dmem[i] = 0; end
+    for (i = 0; i < 32;  i = i + 1) regs[i] = 0;
+    if ($value$plusargs("PROG=%s", fname)) $readmemh(fname, imem);
+  end
+`endif
 
+  
   // pipeline registers declared up front so every stage can see them
   reg [31:0] id_pc, id_instr;
   reg [31:0] ex_pc, ex_rs1_val, ex_rs2_val, ex_imm;
@@ -46,6 +57,7 @@ module pipe_core (input clk, input rst);
   reg  [31:0] if_pc;
   wire [31:0] if_instr = imem[if_pc[9:2]];
 
+  //IF/ID
   always @(posedge clk) begin
     if (rst) begin
       if_pc <= 0; id_pc <= 0; id_instr <= NOP;
@@ -173,15 +185,7 @@ module pipe_core (input clk, input rst);
   end
 
   // ------------------------------------------------------------------ WB
-  integer i;
-`ifndef SYNTHESIS   // simulation-only: zero memories and load program
-  initial begin : init
-    reg [1023:0] fname;
-    for (i = 0; i < 256; i = i + 1) begin imem[i] = 0; dmem[i] = 0; end
-    for (i = 0; i < 32;  i = i + 1) regs[i] = 0;
-    if ($value$plusargs("PROG=%s", fname)) $readmemh(fname, imem);
-  end
-`endif
+
 
   always @(posedge clk)
     if (!rst && wb_reg_write && wb_rd != 0) regs[wb_rd] <= wb_data;
