@@ -149,14 +149,14 @@ module pipe_core (input clk, input rst);
   reg  [31:0] ex_alu_result;
   always @* begin
     case (ex_alu_op)
-      ALU_SUB: ex_alu_result = ex_fwd_a - ex_alu_b;
-      ALU_AND: ex_alu_result = ex_fwd_a & ex_alu_b;
-      ALU_OR:  ex_alu_result = ex_fwd_a | ex_alu_b;
-      default: ex_alu_result = ex_fwd_a + ex_alu_b;
+      ALU_SUB: ex_alu_result = ex_fwd_a - ex_alu_b; //sub
+      ALU_AND: ex_alu_result = ex_fwd_a & ex_alu_b; // and
+      ALU_OR:  ex_alu_result = ex_fwd_a | ex_alu_b; // or 
+      default: ex_alu_result = ex_fwd_a + ex_alu_b; // add , addi , lw , sw ;
     endcase
   end
 
-  wire ex_eq = (ex_fwd_a == ex_fwd_b);
+  wire ex_eq = (ex_fwd_a == ex_fwd_b); // beq
   assign flush            = !bug_noflush && ex_branch && ex_eq;          // taken branch
   assign ex_branch_target = ex_pc + ex_imm;
 
