@@ -25,16 +25,17 @@ module sc_core (input clk, input rst);
   wire [31:0] imm_b = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
   wire [31:0] imm   = is_sw ? imm_s : is_beq ? imm_b : imm_i;
 
-  wire [31:0] rv1 = (rs1 == 0) ? 32'd0 : regs[rs1];
-  wire [31:0] rv2 = (rs2 == 0) ? 32'd0 : regs[rs2];
-  wire [31:0] opb = is_r ? rv2 : imm;
+  wire [31:0] rv1 = (rs1 == 0) ? 32'd0 : regs[rs1]; //register value 1
+  wire [31:0] rv2 = (rs2 == 0) ? 32'd0 : regs[rs2]; //register value 2
+  wire [31:0] opb = is_r ? rv2 : imm; //operand b 
 
-  wire is_sub = is_r && funct3 == 3'b000 && funct7[5];
+  wire is_sub = is_r && funct3 == 3'b000 && funct7[5]; 
   wire is_and = is_r && funct3 == 3'b111;
   wire is_or  = is_r && funct3 == 3'b110;
   wire [31:0] alu = is_and ? (rv1 & opb) :
                     is_or  ? (rv1 | opb) :
                     is_sub ? (rv1 - opb) : (rv1 + opb);
+  // the last input has both add and addi included. 
 
   wire        taken = is_beq && (rv1 == rv2);
   wire        we    = is_r | is_addi | is_lw;
@@ -54,8 +55,8 @@ module sc_core (input clk, input rst);
     if (rst) pc <= 32'd0;
     else begin
       pc <= taken ? pc + imm_b : pc + 32'd4;
-      if (we && rd != 0) regs[rd] <= wdata;
-      if (is_sw)         dmem[alu[9:2]] <= rv2;
+      if (we && rd != 0) regs[rd] <= wdata; //8 total operations , out of which, this is for- ADD,SUB,OR,AND,ADDI,LW (7)  
+      if (is_sw)         dmem[alu[9:2]] <= rv2; //the one remaining op: SW.
     end
   end
 endmodule
